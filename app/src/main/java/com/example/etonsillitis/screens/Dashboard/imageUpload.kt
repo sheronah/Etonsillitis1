@@ -1,7 +1,6 @@
 package com.example.etonsillitis.screens.Dashboard
 
 import android.app.Activity
-import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -25,6 +24,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.material.icons.Icons
@@ -56,12 +56,10 @@ import com.example.etonsillitis.Myquestions
 import com.example.etonsillitis.R
 import com.example.etonsillitis.modelWork.CNNviewModel
 import com.example.etonsillitis.modelWork.Predictions
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.MultipartBody
-import okhttp3.OkHttpClient
-import okhttp3.RequestBody.Companion.asRequestBody
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.FileOutputStream
@@ -76,12 +74,21 @@ fun uploadPicture(
     navController: NavController,
     drawerstate: DrawerState
 ) {
+    // Get Firebase auth instance
+    val auth = FirebaseAuth.getInstance()
+    val user = auth.currentUser
+    // Get reference to Firebase Realtime Database
+    val database = FirebaseDatabase.getInstance()
+
     val imageState = remember { mutableStateOf<Bitmap?>(null) }
     val context = LocalContext.current
 
     val viewModel = CNNviewModel(context)
     var predictionResult by remember { mutableStateOf(Predictions()) }
 
+    var whenselected by remember {
+        mutableStateOf(false)
+    }
 
     val ourCamera =
         rememberLauncherForActivityResult(contract = ActivityResultContracts.TakePicturePreview()) { bitmap ->
@@ -107,9 +114,30 @@ fun uploadPicture(
                 // Log.d(TAG, "uploadPicture: "+imagePath);
                 viewModel.classifyImage(imagePath)
                 predictionResult = viewModel.predictionResult.value!!
+                whenselected = true
 
-                // Upload the image to your server
-                //uploadImageToServer(imageFile, imageName, coroutineScope)
+                user?.let {
+                    // Get user UUID
+                    val uuid = it.uid
+                    // Get reference to 'users' node in the database
+                    val myRef = database.getReference("PatientDetails")
+
+                    // Insert data into the 'users' node
+                    myRef.push().setValue(
+                        Patient(
+                            uuid,
+                            "%.2f".format(predictionResult.bacterial.times(100)),
+                            "%.2f".format(predictionResult.viral.times(100)),
+                            "%.2f".format(predictionResult.normal.times(100)),
+                            "%.2f".format(predictionResult.unknown.times(100)),
+                            LocalDateTime.now().toString(),
+                            imagePath
+                        )
+                    )
+                }
+
+                Toast.makeText(context, "Patient Details Saved", Toast.LENGTH_LONG).show()
+
             }
         }
 
@@ -142,8 +170,30 @@ fun uploadPicture(
 
                     predictionResult = viewModel.predictionResult.value!!
 
-                    // Upload the image to your server
-                    //uploadImageToServer(file, imageName, coroutineScope)
+                    whenselected = true
+
+                    user?.let {
+                        // Get user UUID
+                        val uuid = it.uid
+                        // Get reference to 'users' node in the database
+                        val myRef = database.getReference("PatientDetails")
+
+                        // Insert data into the 'users' node
+                        myRef.push().setValue(
+                            Patient(
+                                uuid,
+                                "%.2f".format(predictionResult.bacterial.times(100)),
+                                "%.2f".format(predictionResult.viral.times(100)),
+                                "%.2f".format(predictionResult.normal.times(100)),
+                                "%.2f".format(predictionResult.unknown.times(100)),
+                                LocalDateTime.now().toString(),
+                                imagePath
+                            )
+                        )
+                    }
+
+                    Toast.makeText(context, "Patient Details Saved", Toast.LENGTH_LONG).show()
+
 
                 } catch (e: FileNotFoundException) {
                     e.printStackTrace()
@@ -151,9 +201,10 @@ fun uploadPicture(
             }
         }
 
+
     LazyColumn(
         modifier = Modifier
-        .fillMaxSize()
+            .fillMaxSize()
     ) {
         item {
             Row(
@@ -199,7 +250,7 @@ fun uploadPicture(
 
                 ElevatedCard(
                     modifier = Modifier
-                        .fillMaxWidth(.85f)
+                        .fillMaxWidth(.95f)
                         .height(200.dp)
                 ) {
                     imageState.value?.asImageBitmap()?.let {
@@ -260,7 +311,7 @@ fun uploadPicture(
                     }
                 }
 
-                ElevatedCard {
+                ElevatedCard(modifier = Modifier.fillMaxWidth(.95f)) {
                     Box(contentAlignment = Alignment.Center) {
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
@@ -284,7 +335,7 @@ fun uploadPicture(
                                     fontSize = 20.sp,
                                     fontWeight = FontWeight.Bold
                                 )
-                                Text(text = "${predictionResult.viral}")
+                                Text(text = "%.2f".format(predictionResult.viral.times(100)))
                             }
                             Row(
                                 modifier = Modifier
@@ -298,7 +349,7 @@ fun uploadPicture(
                                     fontSize = 20.sp,
                                     fontWeight = FontWeight.Bold
                                 )
-                                Text(text = "${predictionResult.bacterial}")
+                                Text(text = "%.2f".format(predictionResult.bacterial.times(100)))
                             }
                             Row(
                                 modifier = Modifier
@@ -312,7 +363,7 @@ fun uploadPicture(
                                     fontSize = 20.sp,
                                     fontWeight = FontWeight.Bold
                                 )
-                                Text(text = "${predictionResult.normal}")
+                                Text(text = "%.2f".format(predictionResult.normal.times((100))))
                             }
                             Row(
                                 modifier = Modifier
@@ -326,42 +377,39 @@ fun uploadPicture(
                                     fontSize = 20.sp,
                                     fontWeight = FontWeight.Bold
                                 )
-                                Text(text = "${predictionResult.unknown}")
+                                Text(text = "%.2f".format(predictionResult.unknown.times(100)))
                             }
 
 
                         }
                     }
                 }
+                Spacer(modifier = Modifier.size(20.dp))
+                ElevatedButton(
+                    enabled = whenselected,
+                    onClick = {
+                        coroutineScope.launch {
+                            navController.navigate(Myquestions().results)
 
-                ElevatedButton(onClick = {
-                    coroutineScope.launch {
-                        navController.navigate(Myquestions().results)
-
-                    }
-                }) {
+                        }
+                    }) {
                     Text(text = "DIAGNOSE", fontSize = 22.sp, fontWeight = FontWeight.SemiBold)
                 }
+                Spacer(modifier = Modifier.size(20.dp))
 
             }
         }
     }
 }
 
-fun uploadImageToServer(file: File, imageName: String, coroutine: CoroutineScope) {
-    coroutine.launch {
-        // Upload the file to the server
-        val client = OkHttpClient()
-        val requestBody = MultipartBody.Builder()
-            .setType(MultipartBody.FORM)
-            .addFormDataPart("file", imageName, file.asRequestBody("image/png".toMediaTypeOrNull()))
-            .build()
+data class Patient(
+    val id: String = "",
+    val Bacterial: String = "",
+    val Viral: String = "",
+    val normal: String = "",
+    val unknown: String = "",
+    val dateTime: String = "",
+    val img: String = ""
 
-        val request = okhttp3.Request.Builder()
-            .url("http://192.168.137.150:8000/getImage/")
-            .post(requestBody)
-            .build()
 
-        client.newCall(request).execute()
-    }
-}
+)

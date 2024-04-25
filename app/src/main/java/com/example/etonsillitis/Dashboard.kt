@@ -61,6 +61,7 @@ class Dashboard : ComponentActivity() {
                     val navController = rememberNavController()
                     val myRoutes = Myquestions()
                     val drawerstate = rememberDrawerState(initialValue = DrawerValue.Closed)
+                    val name = this.intent.getStringExtra("screen")
 
 
                     ModalNavigationDrawer(
@@ -144,7 +145,7 @@ class Dashboard : ComponentActivity() {
                             modifier = Modifier
                                 .fillMaxSize(),
                             navController = navController,
-                            startDestination = myRoutes.Q1
+                            startDestination =myRoutes.pic
                         ) {
                             composable(myRoutes.Q1) {
                                 questionOne(

@@ -2,6 +2,7 @@ package com.example.etonsillitis.screens.Accounts
 
 import android.content.Context
 import android.content.Intent
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -50,6 +51,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.etonsillitis.Dashboard
 import com.example.etonsillitis.R
+import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -251,11 +253,10 @@ fun Register(
 
                         if (password.isNotEmpty() && email.isNotEmpty() && Rpassword.isNotEmpty()) {
                             //navController.navigate(links.verifyAcc)
+                            Sign(fname, lname,email,password,Rpassword,navController,context)
 
 
-                            context.startActivity(
-                                Intent(context, Dashboard::class.java)
-                            )
+
                         } else {
                             blankInpt = true
 
@@ -296,4 +297,37 @@ fun Register(
 
     }
 
+}
+
+fun Sign(
+    fname: String,
+    lname:String,
+    email: String,
+    password: String,
+    confirmPassword: String,
+    navController: NavController,
+    context: Context
+) {
+    if (password == confirmPassword) {
+        FirebaseAuth.getInstance().createUserWithEmailAndPassword(email, password)
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    // Sign-up successful
+                    navController.navigate("Login")
+                } else {
+                    // Sign-up failed
+                    Toast.makeText(
+                        context,
+                        "Sign-up failed. Please try again.",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+    } else {
+        Toast.makeText(
+            context,
+            "Passwords do not match.",
+            Toast.LENGTH_SHORT
+        ).show()
+    }
 }

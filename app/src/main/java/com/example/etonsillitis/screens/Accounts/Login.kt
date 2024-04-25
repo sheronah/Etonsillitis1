@@ -1,6 +1,7 @@
 package com.example.etonsillitis.screens.Accounts
 import android.content.Context
 import android.content.Intent
+import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -50,6 +51,7 @@ import androidx.navigation.NavController
 import com.example.etonsillitis.Dashboard
 import com.example.etonsillitis.R
 import com.example.etonsillitis.screens.Dashboard.uploadPicture
+import com.google.firebase.auth.FirebaseAuth
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -190,25 +192,9 @@ fun Login(
             Button(
                 onClick = {
                     coroutine.launch {
-//                        if (password.isNotEmpty() && email.isNotEmpty()) {
-//                            val rs = user.getUser(email, password)
-//                            if (rs != null && rs.email == email && rs.pass == password)
-                        context.startActivity(
-                            Intent(context, Dashboard::class.java)
-                        )
-//                            else{
-//                                blankInpt = true
-//                                delay(2500)
-//
-//                                blankInpt = false
-//                            }
-//                        }
-//                        else {
-//                            blankInpt = true
-//                            delay(2500)
-//
-//                            blankInpt = false
-//                        }
+                        if (password.isNotEmpty() && email.isNotEmpty()) {
+                            Loginuser(email, password, navController,context)
+                       }
                     }
                 }, modifier = Modifier
                     .fillMaxWidth(.8f)
@@ -241,3 +227,24 @@ fun Login(
 //
 
 }}
+
+fun Loginuser(
+    useremail: String,
+    password: String,
+    navController: NavController,
+    context: Context
+) {
+    FirebaseAuth.getInstance().signInWithEmailAndPassword(useremail, password)
+        .addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                context.startActivity(Intent(context,Dashboard::class.java))
+            } else {
+                // Login failed
+                Toast.makeText(
+                    context,
+                    "Login failed. Please check your credentials.",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+}

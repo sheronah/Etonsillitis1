@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "395953139767",
+    "firebase_url": "https://etonsillitis-28f23-default-rtdb.firebaseio.com",
+    "project_id": "etonsillitis-28f23",
+    "storage_bucket": "etonsillitis-28f23.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:395953139767:android:4dd0ffb6611183378e0fb2",
+        "android_client_info": {
+          "package_name": "com.example.etonsillitis"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAQspWqLuL_iblB3lo_kEAarjHkBimRq-U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
